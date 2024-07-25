@@ -1,0 +1,16 @@
+{
+    "locale": {
+        "en": "英文",
+        "zh": "中文"
+    },
+    "view": {
+        "homepage": {
+            "title": "主页",
+            "createFile": "新建账本",
+            "openFile": "打开账本"
+        },
+        "settings": {
+            "title": "设置"
+        }
+    }
+}

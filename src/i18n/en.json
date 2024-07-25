@@ -1,0 +1,41 @@
+{
+    "locale": {
+        "en": "English",
+        "zh": "Chinese"
+    },
+    "view": {
+        "homepage": {
+            "title": "Homepage",
+            "status": {
+                "notSupported": "File System API is not supported by your browser.",
+                "notOpened": "No ledger is opened.",
+                "ready": "Opened ledger: {filename}"
+            },
+            "button": {
+                "createFile": "Create Ledger",
+                "openFile": "Open Ledger"
+            }
+        },
+        "income-statement": {
+            "title": "Income Statement"
+        },
+        "balance-sheet": {
+            "title": "Balance Sheet"
+        },
+        "trial-balance": {
+            "title": "Trial Balance"
+        },
+        "journal": {
+            "title": "Journal"
+        },
+        "editor": {
+            "title": "Ledger Editor"
+        },
+        "settings": {
+            "title": "Settings"
+        },
+        "help": {
+            "title": "Help"
+        }
+    }
+}
