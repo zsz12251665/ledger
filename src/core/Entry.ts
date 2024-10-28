@@ -11,6 +11,7 @@ export class Entry {
         this.transaction = transaction;
         this.account = Account.toAccount(account);
         this.value = Value.toValue(value);
+
         if (this.constructor === Entry) Object.freeze(this);
     }
 }

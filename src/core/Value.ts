@@ -16,12 +16,6 @@ export class Value {
         return this.commodity.unit.multiply(this.quantity);
     }
 
-    static toValue(value: ValueLike): Value {
-        if (typeof value === 'string') return Value.fromString(value);
-        if (!(value instanceof Value)) return new Value(value.amount, value.commodity);
-        return value;
-    }
-
     toString(): string {
         return `${this.amount.toString()} ${this.commodity.toString()}`;
     }
@@ -34,6 +28,12 @@ export class Value {
         this.commodity = Commodity.toCommodity(commodity);
         this.quantity = this.commodity.quantize(amount);
         if (this.constructor === Value) Object.freeze(this);
+    }
+
+    static toValue(value: ValueLike): Value {
+        if (typeof value === 'string') return Value.fromString(value);
+        if (!(value instanceof Value)) return new Value(value.amount, value.commodity);
+        return value;
     }
 
     private static fromString(value: string): Value {

@@ -13,13 +13,6 @@ export class Amount {
         return this.coefficient.length;
     }
 
-    static toAmount(value: AmountLike): Amount {
-        if (typeof value === 'string') return Amount.fromString(value);
-        if (typeof value === 'number') return Amount.fromString(value.toExponential());
-        if (typeof value === 'bigint') return Amount.fromString(value.toString());
-        return value;
-    }
-
     equals(other: AmountLike): boolean {
         if (!(other instanceof Amount)) other = Amount.toAmount(other);
         return other.coefficient === this.coefficient && other.exponent === this.exponent && other.sign === this.sign;
@@ -109,10 +102,19 @@ export class Amount {
         if (!Number.isInteger(exponent)) {
             throw new RangeError('The exponent is not an integer');
         }
+
         this.sign = /^0+$/.test(coefficient) ? '' : sign;
         this.coefficient = coefficient.replace(/^0+(?!$)/, '');
         this.exponent = exponent;
+
         if (this.constructor === Amount) Object.freeze(this);
+    }
+
+    static toAmount(value: AmountLike): Amount {
+        if (typeof value === 'string') return Amount.fromString(value);
+        if (typeof value === 'number') return Amount.fromString(value.toExponential());
+        if (typeof value === 'bigint') return Amount.fromString(value.toString());
+        return value;
     }
 
     private static fromString(value: string): Amount {
