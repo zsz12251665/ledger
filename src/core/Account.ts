@@ -2,33 +2,18 @@ import * as URI from 'uri-js';
 import type { Entry } from './Entry';
 import type { Commodity } from './Commodity';
 import type { Amount } from './Amount';
+import type { State } from './State';
 
 interface IAccount {
     readonly uri: string;
-    readonly name?: string;
 }
 
-export type AccountLike = Account | IAccount | string;
+export type AccountLike = IAccount | string;
 
 export class Account {
     readonly uri: string;
-    readonly name: string;
-    private active: boolean = false;
-    private _entries: Entry[] = [];
-
-    private static instances: Map<string, Account> = new Map();
-
-    get entries(): Entry[] {
-        let length = 0;
-        this._entries.forEach((entry, index, entries) => {
-            if (entry.account === this) {
-                if (index !== length) entries[length] = entry;
-                ++length;
-            }
-        });
-        this._entries.length = length;
-        return this._entries;
-    }
+    readonly active: boolean;
+    readonly entries: Entry[];
 
     get balance(): ReadonlyMap<Commodity, Amount> {
         const balance = new Map<Commodity, Amount>();
@@ -45,6 +30,35 @@ export class Account {
         return this.uri;
     }
 
+    isEmpty(): boolean {
+        for (const amount of this.balance.values()) if (!amount.equals(0)) return false;
+        return true;
+    }
+
+    protected constructor(uri: string, active: boolean = false, entries: Iterable<Entry> = []) {
+        uri = URI.normalize(uri);
+
+        this.uri = uri;
+        this.active = active;
+        this.entries = [...entries];
+
+        this.entries.forEach((entry) => {
+            if (entry.account.uri !== this.uri) throw new RangeError('The entry does not belong the the account');
+        });
+
+        if (this.constructor === Account) Object.freeze(this);
+    }
+
+    static fromState(state: State, value: AccountLike): Account {
+        const uri = URI.normalize(typeof value === 'string' ? value : value.uri);
+        return state.accounts.get(uri) ?? new Account(uri);
+    }
+}
+
+export class MutableAccount extends Account {
+    declare active: boolean;
+    declare entries: Entry[];
+
     open(): void {
         if (!this.isEmpty()) throw new Error('The account to be opened is not empty');
         this.active = true;
@@ -55,42 +69,12 @@ export class Account {
         this.active = false;
     }
 
-    isEmpty(): boolean {
-        for (const amount of this.balance.values()) if (!amount.equals(0)) return false;
-        return true;
+    save(): Account {
+        return new Account(this.uri, this.active, this.entries);
     }
 
-    protected constructor(uri: string, name: string) {
-        uri = URI.normalize(uri);
-        if (Account.instances.has(uri)) throw new RangeError('Duplicated instances for the same account URI');
-
-        this.uri = uri;
-        this.name = name;
-
-        if (this.constructor === Account) Object.seal(this);
-        Account.instances.set(uri, this);
-    }
-
-    static toAccount(value: AccountLike): Account;
-    static toAccount(uri: string, name?: string): Account;
-    static toAccount(value: AccountLike, name?: string): Account {
-        if (typeof value === 'string') return Account.fromURI(value, name);
-        if (!(value instanceof Account)) return Account.fromURI(value.uri, value.name);
-        return value;
-    }
-
-    private static fromURI(uri: string, name?: string): Account {
-        uri = URI.normalize(uri);
-        const account = Account.instances.get(uri) ?? new Account(uri, name || getNameFromURI(uri));
-        if (account.name !== name) console.warn('The specified account name does not match the instance');
-        return account;
-    }
-
-    static *[Symbol.iterator]() {
-        for (const account of Account.instances.values()) {
-            if (account.active || !account.isEmpty())
-                yield account;
-        }
+    static getCopy(account: Account): MutableAccount {
+        return new MutableAccount(account.uri, account.active, account.entries);
     }
 }
 
