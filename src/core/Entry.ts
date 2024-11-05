@@ -19,8 +19,12 @@ export type EntryLike = IEntry | IValueWithAccount;
 
 export class Entry {
     readonly transaction: Transaction;
-    readonly account: Account;
+    private readonly accountUri: string;
     readonly value: Value;
+
+    get account(): Account {
+        return this.transaction.state.accounts.get(this.accountUri) as Account;
+    }
 
     get amount(): Amount {
         return this.value.amount;
@@ -32,7 +36,7 @@ export class Entry {
 
     toJSON() {
         return {
-            account: this.account.toString(),
+            account: this.accountUri,
             amount: this.amount.toString(),
             commodity: this.commodity.toString(),
         };
@@ -40,7 +44,7 @@ export class Entry {
 
     protected constructor(transaction: Transaction, account: AccountLike, value: ValueLike) {
         this.transaction = transaction;
-        this.account = Account.toAccount(account);
+        this.accountUri = typeof account === 'string' ? account : account.uri;
         this.value = Value.toValue(value);
 
         if (this.constructor === Entry) Object.freeze(this);
