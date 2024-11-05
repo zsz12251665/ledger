@@ -1,56 +1,53 @@
-import { DateTime } from 'luxon';
-import type { AccountLike } from './Account';
-import { Entry } from './Entry';
-import type { ValueLike } from './Value';
+import type { DateTime } from 'luxon';
+import { Commit } from './Commit';
+import { Entry, type EntryLike } from './Entry';
 
-export class Transaction implements ReadonlySet<Entry> {
-    date: DateTime;
-    private _entries = new Set<Entry>();
+export class Transaction extends Commit implements ReadonlySet<Entry> {
+    private entrySet: ReadonlySet<Entry>;
 
     get size() {
-        return this._entries.size;
+        return this.entrySet.size;
     }
 
     has(value: Entry) {
-        return this._entries.has(value);
+        return this.entrySet.has(value);
     }
 
     keys() {
-        return this._entries.keys();
+        return this.entrySet.keys();
     }
 
     values() {
-        return this._entries.values();
+        return this.entrySet.values();
     }
 
     entries() {
-        return this._entries.entries();
+        return this.entrySet.entries();
     }
 
     [Symbol.iterator]() {
-        return this._entries.values();
+        return this.entrySet.values();
     }
 
-    forEach(callback: (value: Entry, value2: Entry, set: ReadonlySet<Entry>) => void, thisArg?: any) {
-        return this._entries.forEach(callback, thisArg);
+    forEach(callback: (value: Entry, value2: Entry, set: Transaction) => void, thisArg?: any) {
+        return this.entrySet.forEach((value, value2) => callback.call(thisArg, value, value2, this));
     }
 
-    add(account: AccountLike, value: ValueLike): Entry {
-        const entry = new Entry(this, account, value);
-        this._entries.add(entry);
-        return entry;
+    toJSON() {
+        return {
+            action: 'transaction',
+            entries: [...this],
+        };
     }
 
-    clear() {
-        return this._entries.clear();
-    }
+    constructor(date: DateTime, entries: Iterable<EntryLike>) {
+        super(date);
+        const entrySet = new Set<Entry>();
+        for (const entry of entries) {
+            entrySet.add(Entry.fromObject(this, entry));
+        }
+        this.entrySet = entrySet;
 
-    delete(entry: Entry) {
-        return this._entries.delete(entry);
-    }
-
-    constructor(date: DateTime) {
-        this.date = date;
-        if (this.constructor === Transaction) Object.seal(this);
+        if (this.constructor === Transaction) Object.freeze(this);
     }
 }

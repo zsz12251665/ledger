@@ -41,6 +41,10 @@ export class Account {
         return balance;
     }
 
+    toString(): string {
+        return this.uri;
+    }
+
     open(): void {
         if (!this.isEmpty()) throw new Error('The account to be opened is not empty');
         this.active = true;
