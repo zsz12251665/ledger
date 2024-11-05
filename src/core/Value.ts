@@ -3,7 +3,7 @@ import { Commodity, type CommodityLike } from './Commodity';
 
 interface IValue {
     readonly amount: AmountLike;
-    readonly commodity: Commodity;
+    readonly commodity: CommodityLike;
 }
 
 export type ValueLike = Value | IValue | string;
