@@ -6,9 +6,14 @@ interface IValue {
     readonly commodity: CommodityLike;
 }
 
-export type ValueLike = Value | IValue | string;
+interface IValueWithQuantity {
+    readonly quantity: bigint;
+    readonly commodity: CommodityLike;
+}
 
-export class Value {
+export type ValueLike = IValue | IValueWithQuantity | string;
+
+export class Value implements IValue, IValueWithQuantity {
     readonly quantity: bigint;
     readonly commodity: Commodity;
 
@@ -32,8 +37,13 @@ export class Value {
 
     static toValue(value: ValueLike): Value {
         if (typeof value === 'string') return Value.fromString(value);
-        if (!(value instanceof Value)) return new Value(value.amount, value.commodity);
-        return value;
+        if (value instanceof Value) return value;
+        if ('amount' in value) return new Value(value.amount, value.commodity);
+        else {
+            const commodity = Commodity.toCommodity(value.commodity);
+            const amount = commodity.unit.multiply(value.quantity);
+            return new Value(amount, commodity);
+        }
     }
 
     private static fromString(value: string): Value {
