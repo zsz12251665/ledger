@@ -1,40 +1,31 @@
 import { Account, type AccountLike } from './Account';
-import type { Amount, AmountLike } from './Amount';
-import type { Commodity, CommodityLike } from './Commodity';
-import { Transaction } from './Transaction';
+import type { AmountLike } from './Amount';
+import type { CommodityLike } from './Commodity';
+import type { Transaction } from './commit/Transaction';
 import { Value, type ValueLike } from './Value';
 
 interface IEntry {
-    readonly account: AccountLike;
-    readonly value: ValueLike;
-}
-
-interface IValueWithAccount {
     readonly account: AccountLike;
     readonly amount: AmountLike;
     readonly commodity: CommodityLike;
 }
 
-export type EntryLike = IEntry | IValueWithAccount;
+interface IEntryWithValue {
+    readonly account: AccountLike;
+    readonly value: ValueLike;
+}
 
-export class Entry {
+export type EntryLike = IEntry | IEntryWithValue;
+
+export class Entry extends Value implements IEntry {
     readonly transaction: Transaction;
     private readonly accountUri: string;
-    readonly value: Value;
 
     get account(): Account {
         return this.transaction.state.accounts.get(this.accountUri) as Account;
     }
 
-    get amount(): Amount {
-        return this.value.amount;
-    }
-
-    get commodity(): Commodity {
-        return this.value.commodity;
-    }
-
-    toJSON() {
+    toJSON(): IEntry {
         return {
             account: this.accountUri,
             amount: this.amount.toString(),
@@ -42,16 +33,25 @@ export class Entry {
         };
     }
 
-    protected constructor(transaction: Transaction, account: AccountLike, value: ValueLike) {
+    protected constructor(
+        transaction: Transaction,
+        account: AccountLike,
+        amount: AmountLike,
+        commodity: CommodityLike,
+    ) {
+        super(amount, commodity);
         this.transaction = transaction;
         this.accountUri = typeof account === 'string' ? account : account.uri;
-        this.value = Value.toValue(value);
 
         if (this.constructor === Entry) Object.freeze(this);
     }
 
     static fromObject(transaction: Transaction, entry: EntryLike): Entry {
-        if ('value' in entry) return new Entry(transaction, entry.account, entry.value);
-        else return new Entry(transaction, entry.account, entry);
+        if ('value' in entry) {
+            const value = Value.toValue(entry.value);
+            return new Entry(transaction, entry.account, value.amount, value.commodity);
+        } else {
+            return new Entry(transaction, entry.account, entry.amount, entry.commodity);
+        }
     }
 }
