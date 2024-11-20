@@ -41,7 +41,7 @@ export class Entry extends Value implements IEntry {
     ) {
         super(amount, commodity);
         this.transaction = transaction;
-        this.accountUri = typeof account === 'string' ? account : account.uri;
+        this.accountUri = Account.getURI(account);
 
         if (this.constructor === Entry) Object.freeze(this);
     }
