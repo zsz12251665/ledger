@@ -22,7 +22,7 @@ export class Entry extends Value implements IEntry {
     private readonly accountUri: string;
 
     get account(): Account {
-        return this.transaction.state.accounts.get(this.accountUri) as Account;
+        return this.transaction.state.get(this.accountUri);
     }
 
     toJSON(): IEntry {

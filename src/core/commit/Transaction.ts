@@ -1,9 +1,10 @@
 import type { DateTime } from 'luxon';
 import { Commit } from './Commit';
-import { Entry, type EntryLike } from './Entry';
+import { Entry, type EntryLike } from '../Entry';
+import { State } from '../State';
 
 export class Transaction extends Commit implements ReadonlySet<Entry> {
-    private entrySet: ReadonlySet<Entry>;
+    private readonly entrySet: ReadonlySet<Entry>;
 
     get size() {
         return this.entrySet.size;
@@ -40,8 +41,17 @@ export class Transaction extends Commit implements ReadonlySet<Entry> {
         };
     }
 
-    constructor(date: DateTime, entries: Iterable<EntryLike>) {
-        super(date);
+    apply(previousState: State) {
+        const state = State.getMutable(previousState);
+        for (const entry of this.entrySet) {
+            const account = state.get(entry.account);
+            account.entries.push(entry);
+        }
+        return state;
+    }
+
+    constructor(date: DateTime, entries: Iterable<EntryLike>, parent?: Commit | undefined | null) {
+        super(date, parent);
         const entrySet = new Set<Entry>();
         for (const entry of entries) {
             entrySet.add(Entry.fromObject(this, entry));
