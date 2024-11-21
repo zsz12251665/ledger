@@ -22,6 +22,10 @@ export abstract class Account implements IAccount {
         return this.uri;
     }
 
+    toJSON() {
+        return this.uri;
+    }
+
     static getURI(value: AccountLike): string {
         return URI.normalize(value.toString());
     }
