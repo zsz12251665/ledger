@@ -4,14 +4,19 @@ import { ImmutableState, MutableState, State } from '../State';
 export abstract class Commit {
     readonly date: DateTime;
     readonly parent: Commit | null;
+    private cachedState: ImmutableState | null = null;
 
     get state(): ImmutableState {
-        return State.getImmutable(this.getRawState());
+        this.cacheState();
+        return this.cachedState as ImmutableState;
     }
 
-    private getRawState(): State {
-        const previousState = this.parent?.getRawState() ?? new MutableState();
-        return this.apply(previousState);
+    private cacheState(depthToCache: number = 0): State {
+        if (!depthToCache && this.cachedState !== null) return this.cachedState;
+        const previousState = this.parent?.cacheState(depthToCache - 1) ?? new MutableState();
+        const state = this.apply(previousState);
+        this.cachedState = State.getImmutable(state);
+        return state;
     }
 
     protected abstract apply(previousState: State): State;
@@ -23,9 +28,12 @@ export abstract class Commit {
         this.parent = parent ?? null;
     }
 
-    static getCommitPath(commit: Commit | null | undefined): Commit[] {
+    static getCommitPath(head: Commit | null | undefined, root: Commit | null | undefined = null): Commit[] {
+        head ??= null;
+        root ??= null;
+
         const path: Commit[] = [];
-        for (commit = commit ?? null; commit !== null; commit = commit.parent) path.unshift(commit);
-        return path;
+        for (; head !== null && head !== root; head = head.parent) path.push(head);
+        return path.reverse();
     }
 }
