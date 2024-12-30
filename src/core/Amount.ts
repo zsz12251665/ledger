@@ -118,7 +118,8 @@ export class Amount {
     }
 
     private static fromString(value: string): Amount {
-        if (typeof value !== 'string' || !NUMERIC_STRING_PATTERN.test(value)) {
+        value = value.toLowerCase();
+        if (!NUMERIC_STRING_PATTERN.test(value)) {
             throw new RangeError('The argument is not a valid number notation.');
         }
         const [coefficientPart, exponentPart] = [...value.split('e', 2), '0'];
